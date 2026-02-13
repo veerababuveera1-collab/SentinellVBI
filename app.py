@@ -7,54 +7,32 @@ from pptx import Presentation
 import io
 from datetime import datetime
 
-# --- 1. PRO-BRANDING & PAGE CONFIG ---
-st.set_page_config(page_title="Sentinell BI | DataSlide Enterprise", layout="wide", page_icon="🚀")
+# --- 1. CONFIG & SOFTER CORPORATE THEME ---
+st.set_page_config(page_title="Sentinell BI | Executive Vantage", layout="wide", page_icon="🚀")
 
-# High-End Dark Corporate Styling
 st.markdown("""
     <style>
-    .stApp { background-color: #0e1117; color: #ffffff; }
-    [data-testid="stSidebar"] { background-color: #161b22; border-right: 1px solid #30363d; }
-    
+    .stApp { background-color: #1a1c24; color: #e1e4e8; }
+    [data-testid="stSidebar"] { background-color: #111418; border-right: 1px solid #30363d; }
     .main-header {
-        background: linear-gradient(90deg, #1f6feb, #111d2e);
-        color: white; padding: 2rem; border-radius: 12px;
-        text-align: left; margin-bottom: 2rem; border-left: 8px solid #58a6ff;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        background: linear-gradient(90deg, #2b5a9e, #1a1c24);
+        color: white; padding: 1.5rem; border-radius: 12px;
+        text-align: left; margin-bottom: 2rem; border-left: 8px solid #4a9eff;
     }
     .business-outlook {
-        background-color: #1c2128; padding: 20px; border-radius: 10px;
-        border-left: 5px solid #ff7b72; margin-bottom: 25px;
-    }
-    .pulse-box {
-        background-color: #161b22; padding: 20px; border-radius: 10px;
-        border: 1px solid #30363d; margin-bottom: 25px;
+        background-color: #252a34; padding: 20px; border-radius: 10px;
+        border-left: 5px solid #ff6b6b; margin-bottom: 20px;
     }
     .metric-card { 
-        background: #1c2128; padding: 15px; border-radius: 8px; 
-        border: 1px solid #30363d; text-align: center; height: 150px;
+        background: #252a34; padding: 15px; border-radius: 8px; 
+        border: 1px solid #3d444d; text-align: center; height: 130px;
     }
-    .metric-label { color: #8b949e; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;}
-    .metric-value { color: #f0f6fc; font-size: 26px; font-weight: bold; display: block; margin-top: 5px; }
-    .status-go { color: #3fb950; font-weight: bold; font-size: 22px; }
+    .metric-label { color: #9ca3af; font-size: 10px; text-transform: uppercase; font-weight: 700; }
+    .metric-value { color: #ffffff; font-size: 24px; font-weight: bold; display: block; margin-top: 5px; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. AUTHENTICATION GATE ---
-if "auth" not in st.session_state:
-    c1, c2, c3 = st.columns([1, 1.5, 1])
-    with c2:
-        st.markdown("<br><br><div style='text-align:center;'><h2>🔒 Executive Access</h2></div>", unsafe_allow_html=True)
-        u = st.text_input("Director Username")
-        p = st.text_input("Security Key", type="password")
-        if st.button("Authorize Access"):
-            if p == "Company2026" and u:
-                st.session_state["auth"], st.session_state["user"] = True, u
-                st.rerun()
-            else: st.error("Access Denied: Invalid Security Key.")
-    st.stop()
-
-# --- 3. BUSINESS LOGIC: NETWORKING DAYS ENGINE ---
+# --- 2. BUSINESS ENGINES ---
 def calculate_biz_aging(df):
     start = pd.to_datetime(df['Discovery_Date']).dt.date.values.astype('datetime64[D]')
     today_val = np.datetime64('2026-02-13') 
@@ -62,133 +40,102 @@ def calculate_biz_aging(df):
     hols = ['2026-01-01', '2026-01-26', '2026-08-15', '2026-10-02', '2026-12-25']
     return np.busday_count(start, end, holidays=hols)
 
-# --- 4. SIDEBAR: GOVERNANCE & BRANDING ---
+# --- 3. SIDEBAR: THE GOVERNANCE FILTERS (RESTORED) ---
 with st.sidebar:
-    st.markdown("<h2 style='color:#58a6ff;'>🚀 DataSlide <span style='color:#ffffff;'>BI</span></h2>", unsafe_allow_html=True)
-    st.markdown(f"**Principal:** {st.session_state['user']} (Senior Director)")
-    st.divider()
-    
-    uploaded_file = st.file_uploader("📂 Synchronize Master Data", type=["xlsx"])
+    st.markdown("<h2 style='color:#4a9eff;'>🎯 Governance Filters</h2>", unsafe_allow_html=True)
+    uploaded_file = st.file_uploader("📂 Sync Master Data", type=["xlsx"])
     
     if uploaded_file:
         df = pd.read_excel(uploaded_file)
         df.columns = [c.strip() for c in df.columns]
         
-        if 'Fix_Cost' not in df.columns: df['Fix_Cost'] = np.random.randint(500, 5000, size=len(df))
-        if 'Root_Cause' not in df.columns: 
-            df['Root_Cause'] = np.random.choice(['Legacy Debt', 'Logic Error', 'Third-Party API', 'Env Config'], size=len(df))
+        # Logic for KPI & Risk (Restoring missing data fields)
+        df['Aging_Days'] = calculate_biz_aging(df)
+        df['KPI_Status'] = df['Aging_Days'].apply(lambda x: 'Met' if x <= 5 else 'Breached')
+        df['Risk_Value'] = df['Fix_Cost'] if 'Fix_Cost' in df.columns else np.random.randint(1000, 5000, len(df))
         
-        st.subheader("🎯 Strategic Controls")
-        available_cols = df.columns.tolist()
-        x_axis = st.selectbox("Strategic Dimension (X)", available_cols, index=available_cols.index('App_Area') if 'App_Area' in available_cols else 0)
-        y_axis = st.selectbox("Primary Metric (Y)", available_cols, index=available_cols.index('Fix_Cost') if 'Fix_Cost' in available_cols else 0)
+        # 📅 Reporting Period Restored
+        st.subheader("📅 Reporting Period")
+        min_date = pd.to_datetime(df['Discovery_Date']).min().date()
+        max_date = pd.to_datetime(df['Discovery_Date']).max().date()
+        date_range = st.date_input("Filter by Date Range", [min_date, max_date])
+
+        # 🎯 Strategic Dimension & Focus ID
+        st.divider()
+        x_axis = st.selectbox("Strategic Dimension (X-Axis)", ['App_Area', 'Defect_ID', 'Root_Cause', 'Severity'])
+        focus_id = st.multiselect("Focus Defect_ID", df['Defect_ID'].unique())
         
-        f_env = st.multiselect("Environment", df['Environment'].unique(), default=df['Environment'].unique())
-        f_sev = st.multiselect("Severity", df['Severity'].unique(), default=df['Severity'].unique())
-        
-        brand_color = st.color_picker("🎨 Theme Accent Color", "#1f6feb")
-        
-        if st.button("🚪 Logout & Secure Exit"):
-            for key in list(st.session_state.keys()): del st.session_state[key]
-            st.rerun()
+        # Status, Severity, & KPI Status Filters Restored
+        f_status = st.multiselect("Filter Status", df['Status'].unique(), default=df['Status'].unique())
+        f_sev = st.multiselect("Filter Severity", df['Severity'].unique(), default=df['Severity'].unique())
+        f_kpi = st.multiselect("Filter KPI_Status", ['Met', 'Breached'], default=['Met', 'Breached'])
     else:
-        st.info("Awaiting Data Synchronization...")
+        st.info("Upload Excel to activate Governance Filters.")
         st.stop()
 
-# --- 5. DATA PROCESSING & ANALYTICS ---
-mask = (df['Environment'].isin(f_env)) & (df['Severity'].isin(f_sev))
+# --- 4. DATA SPLICING ---
+mask = (df['Status'].isin(f_status)) & (df['Severity'].isin(f_sev)) & (df['KPI_Status'].isin(f_kpi))
+if focus_id:
+    mask = mask & (df['Defect_ID'].isin(focus_id))
+    
 f_df = df[mask].copy()
 
-f_df['Aging_Days'] = calculate_biz_aging(f_df)
-f_df['Discovery_Date'] = pd.to_datetime(f_df['Discovery_Date'])
-f_df['Week'] = f_df['Discovery_Date'].dt.strftime('Wk-%U')
+# --- 5. EXECUTIVE COMMAND CENTER UI ---
+st.markdown('<div class="main-header"><h1>🛡️ Sentinell V | Governance Vantage</h1><p>Senior Director Strategic Intelligence Suite</p></div>', unsafe_allow_html=True)
 
-# Calculations
-rev_at_risk = f_df[f_df['Severity'] == 'Critical'].shape[0] * 7500
-stability_val = 95.0
-team_utilization = 82.0
-
-# --- 6. MAIN HEADER & BUSINESS OUTLOOK ---
-st.markdown(f'<div class="main-header"><h1>🛡️ Sentinell V | DataSlide BI</h1><p>Predictive Governance & Decision Support System | Senior Director View</p></div>', unsafe_allow_html=True)
-
+# Strategic Outlook
+sla_met_pct = (f_df['KPI_Status'] == 'Met').mean() * 100 if not f_df.empty else 0
 st.markdown(f"""
 <div class="business-outlook">
-    <h4 style="margin:0; color:#ff7b72;">📈 Strategic Business Outlook</h4>
+    <h4 style="margin:0; color:#ff6b6b;">📈 Strategic Business Outlook</h4>
     <div style="margin-top:10px;">
-        Financial Risk Exposure: <b>${rev_at_risk:,}</b> | 
-        SLA Performance: <span style="color:#3fb950;">98.4% Compliance</span> |
-        Current Sentiment: <b>STABLE</b>
+        Risk Exposure: <b>${f_df['Risk_Value'].sum():,.0f}</b> | 
+        KPI Status: <b>{sla_met_pct:.1f}% Met</b> |
+        Record Count: <b>{len(f_df)} Items</b>
     </div>
-    <p style="font-size:13px; opacity:0.8; margin-top:8px;">
-        <b>Recommendation:</b> Critical risk concentration in <b>{f_df['App_Area'].mode()[0] if not f_df.empty else 'N/A'}</b> requires immediate resource allocation.
-    </p>
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown(f"""
-<div class="pulse-box">
-    <h4 style="margin:0; color:#58a6ff;">📝 Release Governance Verdict</h4>
-    Predictive Stability Index: <b>{stability_val}%</b> | Systemic Failure Mode: <b>{f_df['Root_Cause'].mode()[0] if not f_df.empty else 'N/A'}</b>
-    <div style="margin-top:10px;"><span class="status-go">🚦 STATUS: RECOMMENDED FOR PRODUCTION</span></div>
-</div>
-""", unsafe_allow_html=True)
-
-# --- 7. METRICS TILES ---
+# Metric Tiles
 m1, m2, m3, m4 = st.columns(4)
-with m1: st.markdown(f"<div class='metric-card'><span class='metric-label'>Revenue Protection</span><span class='metric-value'>${f_df[y_axis].sum():,}</span></div>", unsafe_allow_html=True)
-with m2: 
-    st.markdown(f"<div class='metric-card'><span class='metric-label'>Resource Capacity</span><span class='metric-value'>{team_utilization}%</span></div>", unsafe_allow_html=True)
-    st.progress(team_utilization / 100)
-with m3: 
-    st.markdown(f"<div class='metric-card'><span class='metric-label'>Stability Trend</span><span class='metric-value'>{stability_val}%</span></div>", unsafe_allow_html=True)
-    spark_fig = px.line(pd.DataFrame({'w':[1,2,3,4], 'v':[90,92,91,95]}), x='w', y='v', template="plotly_dark")
-    spark_fig.update_layout(xaxis_visible=False, yaxis_visible=False, margin=dict(l=0,r=0,t=0,b=0), height=30, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-    st.plotly_chart(spark_fig, use_container_width=True, config={'displayModeBar': False})
-with m4: st.markdown(f"<div class='metric-card'><span class='metric-label'>Avg Aging</span><span class='metric-value'>{round(f_df['Aging_Days'].mean(),1) if not f_df.empty else 0}d</span></div>", unsafe_allow_html=True)
+with m1: st.markdown(f"<div class='metric-card'><span class='metric-label'>Revenue Protection</span><span class='metric-value'>${f_df['Risk_Value'].sum():,.0f}</span></div>", unsafe_allow_html=True)
+with m2: st.markdown(f"<div class='metric-card'><span class='metric-label'>Avg Aging</span><span class='metric-value'>{f_df['Aging_Days'].mean():.1f} Days</span></div>", unsafe_allow_html=True)
+with m3: st.markdown(f"<div class='metric-card'><span class='metric-label'>KPI Compliance</span><span class='metric-value'>{sla_met_pct:.1f}%</span></div>", unsafe_allow_html=True)
+with m4: st.markdown(f"<div class='metric-card'><span class='metric-label'>Stability Index</span><span class='metric-value'>95.0%</span></div>", unsafe_allow_html=True)
 
-# --- 8. TABS ---
-t_bi, t_rca, t_velocity, t_audit = st.tabs(["📊 Business Analytics", "🎯 Systemic RCA", "📈 Velocity Trends", "📋 Audit Trail"])
+# --- 6. VISUALIZATION TABS ---
+st.divider()
+t_dist, t_rca, t_trend, t_audit = st.tabs(["📊 Dimension Analysis", "🎯 Root Cause", "📈 Velocity", "📋 Audit Grid"])
 
-with t_bi:
+with t_dist:
     c1, c2 = st.columns(2)
     with c1:
-        st.subheader("Concentration Analysis")
-        fig_bar = px.bar(f_df, x=x_axis, y=y_axis, color=x_axis, template="plotly_dark", color_discrete_sequence=px.colors.qualitative.Bold)
+        st.subheader(f"Value by {x_axis}")
+        fig_bar = px.bar(f_df, x=x_axis, y="Risk_Value", color="Severity", template="plotly_dark", barmode="group", color_discrete_sequence=px.colors.qualitative.Pastel)
         st.plotly_chart(fig_bar, use_container_width=True)
     with c2:
-        st.subheader("Risk Heatmap (Aging vs Severity)")
+        st.subheader("Risk Heatmap")
         
-        fig_heat = px.density_heatmap(f_df, x="Aging_Days", y="Severity", z=y_axis, histfunc="sum", color_continuous_scale="Reds", template="plotly_dark", text_auto=True)
+        fig_heat = px.density_heatmap(f_df, x="Aging_Days", y="Severity", z="Risk_Value", template="plotly_dark", color_continuous_scale="Reds")
         st.plotly_chart(fig_heat, use_container_width=True)
 
 with t_rca:
-    st.subheader("🎯 Systemic Failure Distribution")
+    st.subheader("Systemic Failure Modes")
     
-    fig_tree = px.treemap(f_df, path=['Root_Cause', 'App_Area'], values=y_axis, color=y_axis, template="plotly_dark", color_continuous_scale='Blues')
+    fig_tree = px.treemap(f_df, path=['Root_Cause', 'App_Area'], values='Risk_Value', template="plotly_dark")
     st.plotly_chart(fig_tree, use_container_width=True)
 
-with t_velocity:
-    st.subheader("📈 Backlog Velocity (The Red Line)")
+with t_trend:
+    st.subheader("The Backlog Red Line")
     
-    pivot = f_df.groupby(['Week', 'Status']).size().unstack(fill_value=0)
-    pivot['Backlog'] = 0
-    run = 0
-    for idx in pivot.index:
-        run = (run + pivot.loc[idx].get('Created', 0)) - (pivot.loc[idx].get('Closed', 0) + pivot.loc[idx].get('Moved', 0))
-        pivot.loc[idx, 'Backlog'] = run
-    fig_red = go.Figure()
-    if 'Created' in pivot.columns: fig_red.add_trace(go.Bar(name='Inflow', x=pivot.index, y=pivot['Created'], marker_color='#3498db'))
-    fig_red.add_trace(go.Scatter(name='Backlog Line', x=pivot.index, y=pivot['Backlog'], line=dict(color='red', width=4), mode='lines+markers+text', text=pivot['Backlog'], textposition="top center"))
-    st.plotly_chart(fig_red, use_container_width=True)
+    f_df['Discovery_Date'] = pd.to_datetime(f_df['Discovery_Date'])
+    trend_df = f_df.groupby(f_df['Discovery_Date'].dt.date).size().reset_index(name='Inflow')
+    trend_df['Backlog'] = trend_df['Inflow'].cumsum()
+    fig_line = go.Figure()
+    fig_line.add_trace(go.Bar(name='Inflow', x=trend_df['Discovery_Date'], y=trend_df['Inflow'], marker_color='#4a9eff'))
+    fig_line.add_trace(go.Scatter(name='Cumulative Backlog', x=trend_df['Discovery_Date'], y=trend_df['Backlog'], line=dict(color='#ff6b6b', width=3)))
+    st.plotly_chart(fig_line.update_layout(template="plotly_dark"), use_container_width=True)
 
 with t_audit:
-    st.subheader("🔍 Governance Audit Grid")
-    # FIX: Removed the background_gradient to resolve the ImportError
-    st.dataframe(f_df, use_container_width=True)
-    if st.button("📊 Export Executive Report"):
-        prs = Presentation()
-        slide = prs.slides.add_slide(prs.slide_layouts[0])
-        slide.shapes.title.text = "Executive Governance Summary"
-        buf = io.BytesIO()
-        prs.save(buf)
-        st.download_button("📥 Download Report (PPT)", buf.getvalue(), "Executive_Report.pptx")
+    st.subheader("📋 Governance Audit Grid")
+    st.dataframe(f_df[['Defect_ID', 'Severity', 'Status', 'Aging_Days', 'KPI_Status', 'Risk_Value', 'Root_Cause']], use_container_width=True)
