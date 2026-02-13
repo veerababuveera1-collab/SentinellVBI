@@ -59,7 +59,6 @@ def calculate_biz_aging(df):
     start = pd.to_datetime(df['Discovery_Date']).dt.date.values.astype('datetime64[D]')
     today_val = np.datetime64('2026-02-13') 
     end = pd.to_datetime(df['Closed_Date']).dt.date.fillna(pd.Timestamp(today_val)).values.astype('datetime64[D]')
-    # Official 2026 Public Holidays
     hols = ['2026-01-01', '2026-01-26', '2026-08-15', '2026-10-02', '2026-12-25']
     return np.busday_count(start, end, holidays=hols)
 
@@ -75,7 +74,6 @@ with st.sidebar:
         df = pd.read_excel(uploaded_file)
         df.columns = [c.strip() for c in df.columns]
         
-        # --- DATA AUTO-REPAIR FOR BUSINESS VIEW ---
         if 'Fix_Cost' not in df.columns: df['Fix_Cost'] = np.random.randint(500, 5000, size=len(df))
         if 'Root_Cause' not in df.columns: 
             df['Root_Cause'] = np.random.choice(['Legacy Debt', 'Logic Error', 'Third-Party API', 'Env Config'], size=len(df))
@@ -101,25 +99,18 @@ with st.sidebar:
 mask = (df['Environment'].isin(f_env)) & (df['Severity'].isin(f_sev))
 f_df = df[mask].copy()
 
-# Add Aging and Velocity Columns
 f_df['Aging_Days'] = calculate_biz_aging(f_df)
 f_df['Discovery_Date'] = pd.to_datetime(f_df['Discovery_Date'])
 f_df['Week'] = f_df['Discovery_Date'].dt.strftime('Wk-%U')
 
-# Strategic Calculations
+# Calculations
 rev_at_risk = f_df[f_df['Severity'] == 'Critical'].shape[0] * 7500
 stability_val = 95.0
 team_utilization = 82.0
 
 # --- 6. MAIN HEADER & BUSINESS OUTLOOK ---
-st.markdown(f"""
-    <div class="main-header">
-        <h1 style="margin:0;">🛡️ Sentinell V | DataSlide BI</h1>
-        <p style="margin:0; opacity:0.8;">Predictive Governance & Decision Support System | Senior Director View</p>
-    </div>
-""", unsafe_allow_html=True)
+st.markdown(f'<div class="main-header"><h1>🛡️ Sentinell V | DataSlide BI</h1><p>Predictive Governance & Decision Support System | Senior Director View</p></div>', unsafe_allow_html=True)
 
-# THE STRATEGIC BUSINESS OUTLOOK
 st.markdown(f"""
 <div class="business-outlook">
     <h4 style="margin:0; color:#ff7b72;">📈 Strategic Business Outlook</h4>
@@ -129,24 +120,22 @@ st.markdown(f"""
         Current Sentiment: <b>STABLE</b>
     </div>
     <p style="font-size:13px; opacity:0.8; margin-top:8px;">
-        <b>Recommendation:</b> Critical risk concentration in <b>{f_df['App_Area'].mode()[0]}</b> requires immediate resource allocation.
+        <b>Recommendation:</b> Critical risk concentration in <b>{f_df['App_Area'].mode()[0] if not f_df.empty else 'N/A'}</b> requires immediate resource allocation.
     </p>
 </div>
 """, unsafe_allow_html=True)
 
-# THE GOVERNANCE VERDICT
 st.markdown(f"""
 <div class="pulse-box">
     <h4 style="margin:0; color:#58a6ff;">📝 Release Governance Verdict</h4>
-    Predictive Stability Index: <b>{stability_val}%</b> | Systemic Failure Mode: <b>{f_df['Root_Cause'].mode()[0]}</b>
+    Predictive Stability Index: <b>{stability_val}%</b> | Systemic Failure Mode: <b>{f_df['Root_Cause'].mode()[0] if not f_df.empty else 'N/A'}</b>
     <div style="margin-top:10px;"><span class="status-go">🚦 STATUS: RECOMMENDED FOR PRODUCTION</span></div>
 </div>
 """, unsafe_allow_html=True)
 
 # --- 7. METRICS TILES ---
 m1, m2, m3, m4 = st.columns(4)
-with m1: 
-    st.markdown(f"<div class='metric-card'><span class='metric-label'>Revenue Protection</span><span class='metric-value'>${f_df[y_axis].sum():,}</span></div>", unsafe_allow_html=True)
+with m1: st.markdown(f"<div class='metric-card'><span class='metric-label'>Revenue Protection</span><span class='metric-value'>${f_df[y_axis].sum():,}</span></div>", unsafe_allow_html=True)
 with m2: 
     st.markdown(f"<div class='metric-card'><span class='metric-label'>Resource Capacity</span><span class='metric-value'>{team_utilization}%</span></div>", unsafe_allow_html=True)
     st.progress(team_utilization / 100)
@@ -155,11 +144,9 @@ with m3:
     spark_fig = px.line(pd.DataFrame({'w':[1,2,3,4], 'v':[90,92,91,95]}), x='w', y='v', template="plotly_dark")
     spark_fig.update_layout(xaxis_visible=False, yaxis_visible=False, margin=dict(l=0,r=0,t=0,b=0), height=30, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     st.plotly_chart(spark_fig, use_container_width=True, config={'displayModeBar': False})
-with m4: 
-    st.markdown(f"<div class='metric-card'><span class='metric-label'>Avg Aging</span><span class='metric-value'>{round(f_df['Aging_Days'].mean(),1)}d</span></div>", unsafe_allow_html=True)
+with m4: st.markdown(f"<div class='metric-card'><span class='metric-label'>Avg Aging</span><span class='metric-value'>{round(f_df['Aging_Days'].mean(),1) if not f_df.empty else 0}d</span></div>", unsafe_allow_html=True)
 
-# --- 8. TABS: THE COMMAND ARCHITECTURE ---
-st.divider()
+# --- 8. TABS ---
 t_bi, t_rca, t_velocity, t_audit = st.tabs(["📊 Business Analytics", "🎯 Systemic RCA", "📈 Velocity Trends", "📋 Audit Trail"])
 
 with t_bi:
@@ -170,16 +157,19 @@ with t_bi:
         st.plotly_chart(fig_bar, use_container_width=True)
     with c2:
         st.subheader("Risk Heatmap (Aging vs Severity)")
+        
         fig_heat = px.density_heatmap(f_df, x="Aging_Days", y="Severity", z=y_axis, histfunc="sum", color_continuous_scale="Reds", template="plotly_dark", text_auto=True)
         st.plotly_chart(fig_heat, use_container_width=True)
 
 with t_rca:
     st.subheader("🎯 Systemic Failure Distribution")
+    
     fig_tree = px.treemap(f_df, path=['Root_Cause', 'App_Area'], values=y_axis, color=y_axis, template="plotly_dark", color_continuous_scale='Blues')
     st.plotly_chart(fig_tree, use_container_width=True)
 
 with t_velocity:
     st.subheader("📈 Backlog Velocity (The Red Line)")
+    
     pivot = f_df.groupby(['Week', 'Status']).size().unstack(fill_value=0)
     pivot['Backlog'] = 0
     run = 0
@@ -193,7 +183,8 @@ with t_velocity:
 
 with t_audit:
     st.subheader("🔍 Governance Audit Grid")
-    st.dataframe(f_df.style.background_gradient(cmap='Blues', subset=[y_axis]), use_container_width=True)
+    # FIX: Removed the background_gradient to resolve the ImportError
+    st.dataframe(f_df, use_container_width=True)
     if st.button("📊 Export Executive Report"):
         prs = Presentation()
         slide = prs.slides.add_slide(prs.slide_layouts[0])
